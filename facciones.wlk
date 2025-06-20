@@ -12,7 +12,7 @@ class Personaje{
 }
 
 class Humano inherits Personaje{
-
+   
 }
 class Orco inherits Personaje{
    override method potencialOfensivo(){
@@ -26,11 +26,13 @@ class Orco inherits Personaje{
 
 object Guerrero{
    method extra() = 100
+   method esGroso(unPersonaje) = unPersonaje.fuerza() > 50
 }
 
 class Cazador{
   const mascota
   method extra() = mascota.potencialOfensivo()
+  method esGroso() = mascota.esLongeva() 
 }
 
 class Mascota{
@@ -38,6 +40,7 @@ class Mascota{
     var edad
     const garras
     method cumplirAños(){edad += 1}  
+    method esLongeva() = edad > 10 
     method potencialOfensivo(){
         if(garras){return fuerza * 2}
         else {return fuerza}
@@ -50,20 +53,35 @@ object noTieneMascota{
 
 object brujo{
     method extra() =  1
+    method esGroso() = true
 }
 
 class Localidad{
-
+    var ejercito
+    method poderDefensivo() = ejercito.poderOfensivo()
+    method serOcupada(unEjercito)
 }
 
 class Aldea inherits Localidad{
-    const habitantes = []
-    const tamaño
-    method cantidadMaximaHab() = tamaño
-
+    const maximaTropa
+    method initialize(){
+        if(maximaTropa<10){
+            self.error("La poblacion debe ser mayor a 10")
+        }
+    }
+    override method serOcupada(unEjercito){
+        if(maximaTropa < unEjercito.tamañoTropas()){
+            ejercito = new Ejercito(tropa=unEjercito.losMasPoderosos())
+            unEjercito.quitarLosMasFuertes(ejercito)
+        }
+        else {ejercito = unEjercito}
+    }
 }
 class Ciudad inherits Localidad{
-
+  override method poderDefensivo() = super() + 300  
+  override method serOcupada(unEjercito){
+    ejercito = unEjercito
+  }
 }
 
 class CiudadGrande inherits Ciudad{
@@ -74,4 +92,17 @@ class CiudadRica inherits Ciudad{
 
 }
 
-class Ejercito{}
+class Ejercito{
+  const tropa = []
+  method tamañoTropas() = tropa.size()
+  method ordenadosLosMasPoderosos() = tropa.sortBy({t1,t2 => t1.potencialOfensivo()> t2.potencialOfensivo()}) 
+  method losMasPoderosos() = self.ordenadosLosMasPoderosos().take(10)  
+  method quitarLosMasFuertes() = tropa.removeAll(self.losMasPoderosos())  
+  method poderOfensivo() = tropa.sum({personaje => personaje.potencialOfensivo()})
+  method puedeInvadir(unaLocalidad) = self.poderOfensivo() > unaLocalidad.poderDefensivo() 
+  method invadir(unaLocalidad) {
+    if(self.puedeInvadir(unaLocalidad)){
+        unaLocalidad.serOcupada(self)
+    }
+  } 
+}
